@@ -1,0 +1,76 @@
+mixed-port: 19999
+socks-port: 20000
+allow-lan: false
+mode: rule
+log-level: info
+ipv6: true
+
+proxies:
+  - name: "IPFoxy-SG-IPv4"
+    type: socks5
+    server: "146.235.18.99"
+    port: 45007
+    username: "roX685e38c82bc51"
+    password: "bIwvi2MRAXVdZtYnUI"
+    udp: true
+    skip-cert-verify: true
+    tfo: true
+    
+  - name: "IPFoxy-SG-IPv6"
+    type: socks5
+    server: "2603:c024:450f:2100:39f6:b212:b71d:f62f"
+    port: 45007
+    username: "roX685e38c82bc51"
+    password: "bIwvi2MRAXVdZtYnUI"
+    udp: true
+    skip-cert-verify: true
+    interface: "tun0"
+    ip-version: "ipv6"
+    dialer-proxy: "IPFoxy-SG-IPv4"
+
+proxy-groups:
+  - name: "AUTO-FAILOVER"
+    type: fallback
+    proxies: 
+      - "IPFoxy-SG-IPv4"
+      - "IPFoxy-SG-IPv6"
+    url: "http://connectivitycheck.platform.hicloud.com/generate_204"
+    interval: 300
+    timeout: 10000
+    lazy: true
+    
+  - name: "TIKTOK-SG"
+    type: select
+    proxies: ["AUTO-FAILOVER"]
+
+tun:
+  enable: true
+  stack: system
+  auto-route: true
+  auto-detect-interface: true
+  dns-hijack: ["any:53"]
+  mtu: 1400
+
+dns:
+  enable: true
+  listen: 0.0.0.0:5353
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  nameserver:
+    - "tls://1.1.1.1@853#cloudflare-dns"
+    - "https://dns.google/dns-query"
+  fallback:
+    - "tcp://8.8.8.8"
+    - "udp://1.0.0.1:53"
+
+rules:
+  - DOMAIN-SUFFIX,cn,DIRECT
+  - DOMAIN-KEYWORD,baidu,DIRECT
+  - DOMAIN-KEYWORD,taobao,DIRECT
+  - GEOIP,CN,DIRECT,no-resolve
+  - DOMAIN-SUFFIX,tiktok.com,TIKTOK-SG
+  - DOMAIN-SUFFIX,tiktokv.com,TIKTOK-SG
+  - DOMAIN-SUFFIX,musical.ly,TIKTOK-SG
+  - DOMAIN-KEYWORD,-sgp1,TIKTOK-SG
+  - DOMAIN-KEYWORD,.sg.cdn,TIKTOK-SG
+  - MATCH,AUTO-FAILOVER
